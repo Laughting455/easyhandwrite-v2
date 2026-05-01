@@ -1,0 +1,669 @@
+<!-- templates/index.html -->
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Easy HandWrite — 手写稿生成器</title>
+  <link rel="shortcut icon" href="/favicon.ico">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/axios@1.6/dist/axios.min.min.js"></script>
+  <style>
+    :root {
+      --primary: #4a90d9;
+      --primary-dark: #357abd;
+      --bg: #f5f7fa;
+      --card-bg: #ffffff;
+      --text: #2c3e50;
+      --text-light: #7f8c8d;
+      --border: #e1e8ed;
+      --radius: 12px;
+      --shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    html, body {
+      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+    }
+    .main-container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+    .brand {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .brand h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 6px;
+    }
+    .brand p {
+      color: var(--text-light);
+      font-size: 0.95rem;
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px;
+      margin-bottom: 20px;
+    }
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-title .icon {
+      width: 28px;
+      height: 28px;
+      background: var(--primary);
+      color: white;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+    }
+    .file-input-wrapper {
+      position: relative;
+      border: 2px dashed var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      text-align: center;
+      transition: all 0.2s;
+      cursor: pointer;
+      background: #fafbfc;
+    }
+    .file-input-wrapper:hover {
+      border-color: var(--primary);
+      background: #f0f7ff;
+    }
+    .file-input-wrapper.has-file {
+      border-color: #27ae60;
+      background: #f0fff4;
+    }
+    .file-input-wrapper input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+    }
+    .file-input-wrapper .placeholder {
+      color: var(--text-light);
+      font-size: 0.9rem;
+    }
+    .file-input-wrapper .filename {
+      color: var(--text);
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    .file-input-wrapper .filesize {
+      color: var(--text-light);
+      font-size: 0.8rem;
+      margin-top: 4px;
+    }
+    .param-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 12px;
+    }
+    .param-item label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--text-light);
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+    .param-item input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      transition: border-color 0.2s;
+    }
+    .param-item input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    .param-item .hint {
+      font-size: 0.75rem;
+      color: #e74c3c;
+      margin-top: 2px;
+      display: none;
+    }
+    .param-item.error input {
+      border-color: #e74c3c;
+    }
+    .param-item.error .hint {
+      display: block;
+    }
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(74,144,217,0.3);
+    }
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .btn-secondary {
+      padding: 10px 20px;
+      background: transparent;
+      color: var(--primary);
+      border: 1.5px solid var(--primary);
+      border-radius: var(--radius);
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover {
+      background: var(--primary);
+      color: white;
+    }
+    .progress-section {
+      margin-top: 20px;
+      display: none;
+    }
+    .progress-section.active {
+      display: block;
+    }
+    .progress-bar-bg {
+      height: 8px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+    .progress-text {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 6px;
+      font-size: 0.85rem;
+      color: var(--text-light);
+    }
+    .preview-section {
+      margin-top: 20px;
+      display: none;
+    }
+    .preview-section.active {
+      display: block;
+    }
+    .preview-img {
+      width: 100%;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+    }
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 14px 20px;
+      border-radius: var(--radius);
+      color: white;
+      font-weight: 500;
+      box-shadow: var(--shadow);
+      transform: translateX(150%);
+      transition: transform 0.3s ease;
+      z-index: 1000;
+      max-width: 360px;
+    }
+    .toast.show {
+      transform: translateX(0);
+    }
+    .toast.success { background: #27ae60; }
+    .toast.error { background: #e74c3c; }
+    .toast.info { background: var(--primary); }
+
+    .result-section {
+      margin-top: 20px;
+      display: none;
+      text-align: center;
+      padding: 24px;
+      background: #f0fff4;
+      border-radius: var(--radius);
+      border: 1px solid #27ae60;
+    }
+    .result-section.active {
+      display: block;
+    }
+    .result-section h3 {
+      color: #27ae60;
+      margin-bottom: 12px;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .details-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--primary);
+      font-size: 0.9rem;
+      cursor: pointer;
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+    .details-toggle:hover {
+      color: var(--primary-dark);
+    }
+    .details-toggle .arrow {
+      transition: transform 0.2s;
+    }
+    .details-toggle.open .arrow {
+      transform: rotate(90deg);
+    }
+    .details-content {
+      display: none;
+    }
+    .details-content.open {
+      display: block;
+    }
+
+    @media (max-width: 480px) {
+      .main-container { padding: 20px 12px; }
+      .brand h1 { font-size: 1.5rem; }
+      .card { padding: 20px; }
+    }
+  </style>
+<base target="_blank">
+</head>
+<body>
+
+<div class="main-container">
+  <div class="brand">
+    <h1>Easy HandWrite</h1>
+    <p>将 Word / TXT 文档转换为逼真的手写稿图片（绝对不是拿来写作业！）</p>
+  </div>
+
+  <!-- 文件上传 -->
+  <div class="card">
+    <div class="card-title">
+      <div class="icon">📄</div>
+      上传文档
+    </div>
+
+    <div class="file-input-wrapper" id="wordWrapper">
+      <input type="file" id="wordInput" name="word" accept=".docx,.txt" required>
+      <div class="placeholder">
+        <div style="font-size:1.5rem;margin-bottom:8px">📄</div>
+        <div>点击或拖拽上传 Word / TXT 文档</div>
+        <div class="filesize">支持 .docx、.txt 格式</div>
+      </div>
+      <div class="filename" style="display:none"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <div class="icon" style="background:#e67e22">🖋</div>
+      选择字体
+    </div>
+
+    <div class="file-input-wrapper" id="fontWrapper">
+      <input type="file" id="fontInput" name="font" accept=".ttf,.otf" required>
+      <div class="placeholder">
+        <div style="font-size:1.5rem;margin-bottom:8px">🖋</div>
+        <div>点击或拖拽上传字体文件</div>
+        <div class="filesize">支持 .ttf、.otf 格式</div>
+      </div>
+      <div class="filename" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- 参数设置 -->
+  <div class="card">
+    <div class="details-toggle" id="paramToggle">
+      <span class="arrow">▶</span>
+      <span>高级参数设置</span>
+    </div>
+    <div class="details-content" id="paramContent">
+      <div class="param-grid">
+        <div class="param-item">
+          <label>字体大小 (px)</label>
+          <input type="number" name="font_size" value="50" min="20" max="200" step="1">
+        </div>
+        <div class="param-item">
+          <label>行距 (px)</label>
+          <input type="number" name="line_spacing" value="65" min="20" max="300" step="1">
+          <div class="hint">行距必须 ≥ 字体大小</div>
+        </div>
+        <div class="param-item">
+          <label>页面宽度 (px)</label>
+          <input type="number" name="page_width" value="2480" min="500" max="5000" step="1">
+        </div>
+        <div class="param-item">
+          <label>页面高度 (px)</label>
+          <input type="number" name="page_height" value="3508" min="500" max="5000" step="1">
+        </div>
+        <div class="param-item">
+          <label>左边距 (px)</label>
+          <input type="number" name="ml" value="40" min="0" max="500" step="1">
+        </div>
+        <div class="param-item">
+          <label>上边距 (px)</label>
+          <input type="number" name="mt" value="40" min="0" max="500" step="1">
+        </div>
+        <div class="param-item">
+          <label>右边距 (px)</label>
+          <input type="number" name="mr" value="40" min="0" max="500" step="1">
+        </div>
+        <div class="param-item">
+          <label>下边距 (px)</label>
+          <input type="number" name="mb" value="40" min="0" max="500" step="1">
+        </div>
+      </div>
+      <div style="margin-top:12px;font-size:0.8rem;color:var(--text-light)">
+        tip：A4 纸尺寸为 2480×3508 px（300dpi），可根据需要调整
+      </div>
+    </div>
+  </div>
+
+  <!-- 操作按钮 -->
+  <div style="display:flex;gap:12px;margin-bottom:20px">
+    <button class="btn-secondary" id="previewBtn" style="flex:1" disabled>
+      👁 预览效果
+    </button>
+    <button class="btn-primary" id="generateBtn" style="flex:2" disabled>
+      <span class="spinner" id="genSpinner" style="display:none"></span>
+      <span id="genText">ヾ(≧▽≦*)o生成手写稿</span>
+    </button>
+  </div>
+
+  <!-- 进度 -->
+  <div class="progress-section" id="progressSection">
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progressBar"></div>
+    </div>
+    <div class="progress-text">
+      <span id="progressStatus">正在生成...</span>
+      <span id="progressPercent">0%</span>
+    </div>
+  </div>
+
+  <!-- 预览 -->
+  <div class="preview-section" id="previewSection">
+    <div class="card-title">
+      <div class="icon" style="background:#9b59b6">👁</div>
+      预览效果
+    </div>
+    <img class="preview-img" id="previewImg" alt="预览">
+  </div>
+
+  <!-- 结果 -->
+  <div class="result-section" id="resultSection">
+    <h3>(≧∀≦)生成完成！</h3>
+    <p id="resultText" style="color:var(--text-light);margin-bottom:16px"></p>
+    <a class="btn-primary" id="downloadBtn" style="display:inline-block;width:auto;padding:12px 32px;text-decoration:none">
+     ψ(｀∇´)ψ下载手写稿 (ZIP)
+    </a>
+  </div>
+</div>
+
+<!-- Toast 通知 -->
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// 文件上传交互
+function setupFileInput(wrapperId, inputId) {
+  const wrapper = $(wrapperId);
+  const input = $(inputId);
+  const placeholder = wrapper.querySelector('.placeholder');
+  const filename = wrapper.querySelector('.filename');
+
+  input.addEventListener('change', () => {
+    if (input.files.length > 0) {
+      const file = input.files[0];
+      placeholder.style.display = 'none';
+      filename.style.display = 'block';
+      filename.innerHTML = `<strong>${file.name}</strong><div class="filesize">${(file.size/1024).toFixed(1)} KB</div>`;
+      wrapper.classList.add('has-file');
+    } else {
+      placeholder.style.display = 'block';
+      filename.style.display = 'none';
+      wrapper.classList.remove('has-file');
+    }
+    updateButtons();
+  });
+
+  // 拖拽支持
+  wrapper.addEventListener('dragover', e => {
+    e.preventDefault();
+    wrapper.style.borderColor = 'var(--primary)';
+  });
+  wrapper.addEventListener('dragleave', () => {
+    wrapper.style.borderColor = '';
+  });
+  wrapper.addEventListener('drop', e => {
+    e.preventDefault();
+    wrapper.style.borderColor = '';
+    if (e.dataTransfer.files.length > 0) {
+      input.files = e.dataTransfer.files;
+      input.dispatchEvent(new Event('change'));
+    }
+  });
+}
+
+setupFileInput('wordWrapper', 'wordInput');
+setupFileInput('fontWrapper', 'fontInput');
+
+// 参数折叠
+$('paramToggle').addEventListener('click', () => {
+  $('paramToggle').classList.toggle('open');
+  $('paramContent').classList.toggle('open');
+});
+
+// 按钮状态
+function updateButtons() {
+  const hasWord = $('wordInput').files.length > 0;
+  const hasFont = $('fontInput').files.length > 0;
+  const ready = hasWord && hasFont;
+  $('previewBtn').disabled = !ready;
+  $('generateBtn').disabled = !ready;
+}
+
+// Toast
+function showToast(msg, type='info') {
+  const toast = $('toast');
+  toast.textContent = msg;
+  toast.className = `toast ${type} show`;
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// 收集表单数据
+function collectFormData() {
+  const data = new FormData();
+  data.append('word', $('wordInput').files[0]);
+  data.append('font', $('fontInput').files[0]);
+
+  document.querySelectorAll('.param-item input').forEach(input => {
+    data.append(input.name, input.value);
+  });
+
+  return data;
+}
+
+// 验证参数
+function validateParams() {
+  const fontSize = parseInt(document.querySelector('input[name="font_size"]').value);
+  const lineSpacing = parseFloat(document.querySelector('input[name="line_spacing"]').value);
+
+  const lineSpacingItem = document.querySelector('input[name="line_spacing"]').closest('.param-item');
+
+  if (lineSpacing < fontSize) {
+    lineSpacingItem.classList.add('error');
+    showToast(`行距必须 ≥ 字体大小 (${fontSize}px)`, 'error');
+    return false;
+  }
+  lineSpacingItem.classList.remove('error');
+  return true;
+}
+
+// 预览
+$('previewBtn').addEventListener('click', async () => {
+  if (!validateParams()) return;
+
+  $('previewBtn').disabled = true;
+  $('previewBtn').textContent = '生成中...';
+
+  try {
+    const res = await axios.post('/preview', collectFormData(), {
+      responseType: 'blob'
+    });
+
+    const url = URL.createObjectURL(res.data);
+    $('previewImg').src = url;
+    $('previewSection').classList.add('active');
+
+    // 滚动到预览
+    $('previewSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    showToast('预览生成成功', 'success');
+
+  } catch (err) {
+    const msg = err.response ? await err.response.data.text() : err.message;
+    showToast('预览失败：' + msg, 'error');
+  } finally {
+    $('previewBtn').disabled = false;
+    $('previewBtn').textContent = '👁 预览效果';
+  }
+});
+
+// 生成
+$('generateBtn').addEventListener('click', async () => {
+  if (!validateParams()) return;
+
+  // 重置状态
+  $('resultSection').classList.remove('active');
+  $('previewSection').classList.remove('active');
+  $('progressSection').classList.add('active');
+  $('generateBtn').disabled = true;
+  $('genSpinner').style.display = 'inline-block';
+  $('genText').textContent = '正在生成...';
+
+  let taskId = null;
+  let pollInterval = null;
+
+  try {
+    // 1. 提交生成请求
+    const res = await axios.post('/generate', collectFormData());
+    const result = res.data;
+
+    if (!result.success) {
+      throw new Error(result.error || '生成失败');
+    }
+
+    taskId = result.task_id;
+    showToast(result.message, 'success');
+
+    // 2. 轮询进度
+    pollInterval = setInterval(async () => {
+      try {
+        const progressRes = await axios.get(`/progress/${taskId}`);
+        const task = progressRes.data;
+
+        if (task.status === 'done') {
+          clearInterval(pollInterval);
+
+          // 完成
+          $('progressBar').style.width = '100%';
+          $('progressPercent').textContent = '100%';
+          $('progressStatus').textContent = '生成完成！';
+
+          $('resultText').textContent = `共生成 ${task.total_pages} 页手写稿`;
+          $('downloadBtn').href = `/download/${taskId}`;
+          $('resultSection').classList.add('active');
+          $('resultSection').scrollIntoView({ behavior: 'smooth' });
+
+          showToast('手写稿生成完成！', 'success');
+
+          // 恢复按钮
+          $('generateBtn').disabled = false;
+          $('genSpinner').style.display = 'none';
+          $('genText').textContent = '🚀 生成手写稿';
+
+        } else {
+          const pct = task.total > 0 
+            ? Math.round((task.progress / task.total) * 100) 
+            : 0;
+          $('progressBar').style.width = pct + '%';
+          $('progressPercent').textContent = pct + '%';
+          $('progressStatus').textContent = `正在生成第 ${task.progress} / ${task.total} 页...`;
+        }
+      } catch (e) {
+        console.error('进度查询失败', e);
+      }
+    }, 500);
+
+  } catch (err) {
+    clearInterval(pollInterval);
+    const msg = err.response ? await err.response.data.text() : err.message;
+    showToast('生成失败：' + msg, 'error');
+
+    $('progressSection').classList.remove('active');
+    $('generateBtn').disabled = false;
+    $('genSpinner').style.display = 'none';
+    $('genText').textContent = '🚀 生成手写稿';
+  }
+});
+
+// 参数联动：行距自动跟随字体大小
+const fontSizeInput = document.querySelector('input[name="font_size"]');
+const lineSpacingInput = document.querySelector('input[name="line_spacing"]');
+
+fontSizeInput.addEventListener('change', () => {
+  const fs = parseInt(fontSizeInput.value);
+  const ls = parseInt(lineSpacingInput.value);
+  if (ls < fs) {
+    lineSpacingInput.value = fs + 15;
+  }
+});
+
+// 初始检查
+updateButtons();
+</script>
+
+</body>
+</html>
