@@ -403,7 +403,7 @@
   <!-- 操作按钮 -->
   <div style="display:flex;gap:12px;margin-bottom:20px">
     <button class="btn-secondary" id="previewBtn" style="flex:1" disabled>
-      👁 预览效果
+       预览效果
     </button>
     <button class="btn-primary" id="generateBtn" style="flex:2" disabled>
       <span class="spinner" id="genSpinner" style="display:none"></span>
@@ -622,7 +622,7 @@ $('generateBtn').addEventListener('click', async () => {
           // 恢复按钮
           $('generateBtn').disabled = false;
           $('genSpinner').style.display = 'none';
-          $('genText').textContent = '🚀 生成手写稿';
+          $('genText').textContent = '(≧∀≦)生成手写稿';
 
         } else {
           const pct = task.total > 0 
@@ -645,7 +645,7 @@ $('generateBtn').addEventListener('click', async () => {
     $('progressSection').classList.remove('active');
     $('generateBtn').disabled = false;
     $('genSpinner').style.display = 'none';
-    $('genText').textContent = '🚀 生成手写稿';
+    $('genText').textContent = '(≧∀≦)生成手写稿';
   }
 });
 

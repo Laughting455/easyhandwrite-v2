@@ -4,6 +4,7 @@ from pathlib import Path
 from PIL import Image, ImageFont
 from handright import Template, handwrite
 import chardet
+import webbrowser
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB 上传限制
@@ -219,5 +220,16 @@ def favicon():
     img_io.seek(0)
     return send_file(img_io, mimetype='image/png')
 
+# ── 自动打开浏览器 ────────────────────
+
+def open_browser():
+    """延迟 1.5 秒后自动打开浏览器"""
+    time.sleep(1.5)
+    webbrowser.open_new('http://127.0.0.1:5000')
+
 if __name__ == "__main__":
+    # 启动浏览器线程（仅非调试重载时）
+    if os.environ.get('WERKZEUG_RUN_MAIN') != 'true':
+        threading.Thread(target=open_browser, daemon=True).start()
+
     app.run(debug=True, host='0.0.0.0', port=5000)
